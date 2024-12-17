@@ -4,3 +4,4 @@ datasets
 underthesea
 flask
 gdown
+google-cloud-storage
