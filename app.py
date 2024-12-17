@@ -12,8 +12,8 @@ import torch.nn as nn
 from torch.nn import Transformer
 import math
 import warnings
-from google.cloud import storage
-import io
+import os
+import gdown
 warnings.filterwarnings('ignore')
 
 # Load các thành phần cần thiết (tokenizer, vocab, model)
@@ -23,30 +23,33 @@ TGT_LANGUAGE = 'Vietnamese'
 SRC_LANGUAGE_VI_EN = 'Vietnamese'
 TGT_LANGUAGE_VI_EN = 'English'
 
-# Thiết lập kết nối với Google Cloud Storage
-def load_from_gcs(bucket_name, blob_name):
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(blob_name)
-    file_content = blob.download_as_bytes()
-    return io.BytesIO(file_content)
+# Tải model từ Google Drive nếu chưa có
+def download_model_from_drive(file_id, destination):
+    if not os.path.exists(destination):
+        print(f"Đang tải model từ Google Drive tới {destination}...")
+        gdown.download(f'https://drive.google.com/uc?id={file_id}', destination, quiet=False)
+        print("Tải model thành công!")
+    else:
+        print(f"Model {destination} đã tồn tại.")
 
-# Đọc mô hình và vocab từ Google Cloud Storage
-def load_vocab_from_gcs(bucket_name, vocab_blob_name):
-    file_stream = load_from_gcs(bucket_name, vocab_blob_name)
-    return pickle.load(file_stream)
+# File ID trên Google Drive
+EN_VI_MODEL_ID = "1-2_TIAqh2xmlEdGPkY_ZprCURqPz7bRN"  # Thay thế bằng ID của model enVi_transformer.pth
+VI_EN_MODEL_ID = "1-5qpl-KnoRAx70bbhJxk1IwRN2S7jj9B"  # Thay thế bằng ID của model viEn_transformer.pth
+TOKEN_VOCAB_ENVI_ID = "1VzRK5WYEUK_BBJe-ex-fv1QFzfmMvYMT"
+TOKEN_VOCAB_VIEN_ID = "1uvcJqHQ2X7ntg7YJ6Z66166HjACzmYWy"
 
-def load_model_from_gcs(bucket_name, model_blob_name, model):
-    file_stream = load_from_gcs(bucket_name, model_blob_name)
-    state_dict = torch.load(file_stream, map_location=torch.device('cpu'))
-    model.load_state_dict(state_dict)
+# Đường dẫn lưu trữ
+MODEL_PATH = './models/enVi_transformer.pth'
+MODEL_PATH_VI_EN = './models/viEn_transformer.pth'
+TOKEN_VOCAB_PATH = './models/token_vocab_enVi_data.pkl'
+TOKEN_VOCAB_PATH_VI_EN = './models/token_vocab_viEn_data.pkl'
 
-# Cấu hình tên bucket và các blob của mô hình và vocab
-bucket_name = 'eng-vie-translate'
-vocab_blob_name_en_vi = 'token_vocab_enVi_data.pkl'
-vocab_blob_name_vi_en = 'token_vocab_viEn_data.pkl'
-model_blob_name_en_vi = 'enVi_transformer.pth'
-model_blob_name_vi_en = 'viEn_transformer.pth'
+# Tải model từ Google Drive
+os.makedirs('./models', exist_ok=True)
+download_model_from_drive(EN_VI_MODEL_ID, MODEL_PATH)
+download_model_from_drive(VI_EN_MODEL_ID, MODEL_PATH_VI_EN)
+download_model_from_drive(TOKEN_VOCAB_ENVI_ID, TOKEN_VOCAB_PATH)
+download_model_from_drive(TOKEN_VOCAB_VIEN_ID, TOKEN_VOCAB_PATH_VI_EN)
 
 
 def vi_tokenizer(sentence):
@@ -76,10 +79,10 @@ UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
 # Make sure the tokens are in order of their indices to properly insert them in vocab
 special_symbols = ['<unk>', '<pad>', '<bos>', '<eos>']
 # Load tokenizer và vocab
-# Tải vocab và mô hình từ Google Cloud Storage
-token_transform, vocab_transform = load_vocab_from_gcs(bucket_name, vocab_blob_name_en_vi)
-token_transform_vi_en, vocab_transform_vi_en = load_vocab_from_gcs(bucket_name, vocab_blob_name_vi_en)
-
+with open(TOKEN_VOCAB_PATH, 'rb') as f1:
+    token_transform, vocab_transform = pickle.load(f1)
+with open(TOKEN_VOCAB_PATH_VI_EN, 'rb') as f2:
+    token_transform_vi_en, vocab_transform_vi_en = pickle.load(f2)
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu') #Check whether running on gpu or cpu
 
@@ -232,9 +235,13 @@ for ln in [SRC_LANGUAGE_VI_EN, TGT_LANGUAGE_VI_EN]:
                                                vocab_transform_vi_en[ln], #Numericalization
                                                tensor_transform) # Add BOS/EOS and create tensor
 
-# Tải mô hình từ Google Cloud Storage
-load_model_from_gcs(bucket_name, model_blob_name_en_vi, transformer)
-load_model_from_gcs(bucket_name, model_blob_name_vi_en, transformer_vi_en)
+# Load trạng thái của mô hình từ file
+state_dict = torch.load("./models/enVi_transformer.pth" ,map_location=torch.device('cpu'))
+state_dict_vi_en = torch.load("./models/viEn_transformer.pth", map_location=torch.device('cpu'))
+
+# Khôi phục trạng thái của mô hình từ state_dict
+transformer.load_state_dict(state_dict)
+transformer_vi_en.load_state_dict(state_dict_vi_en)
 
 # function to generate output sequence using greedy algorithm
 def greedy_decode(model, src, src_mask, max_len, start_symbol):
