@@ -3,3 +3,4 @@ torchtext==0.15.1
 datasets
 underthesea
 flask
+gdown
