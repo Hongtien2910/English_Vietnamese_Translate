@@ -33,10 +33,10 @@ def download_model_from_drive(file_id, destination):
         print(f"Model {destination} đã tồn tại.")
 
 # File ID trên Google Drive
-EN_VI_MODEL_ID = "1-2_TIAqh2xmlEdGPkY_ZprCURqPz7bRN"  # Thay thế bằng ID của model enVi_transformer.pth
-VI_EN_MODEL_ID = "1-5qpl-KnoRAx70bbhJxk1IwRN2S7jj9B"  # Thay thế bằng ID của model viEn_transformer.pth
-TOKEN_VOCAB_ENVI_ID = "1VzRK5WYEUK_BBJe-ex-fv1QFzfmMvYMT"
-TOKEN_VOCAB_VIEN_ID = "1uvcJqHQ2X7ntg7YJ6Z66166HjACzmYWy"
+EN_VI_MODEL_ID = "1-4WnCCAHOLqZa2ROBUUNpZFUaooSHtjQ"  # Thay thế bằng ID của model enVi_transformer.pth
+VI_EN_MODEL_ID = "1-AU1pgS40Tjar9o3BrW0vjvvdqLVsje7B"  # Thay thế bằng ID của model viEn_transformer.pth
+TOKEN_VOCAB_ENVI_ID = "17yHIZP32t4-nS1tPIYPHj3wnzRqSmLKU"
+TOKEN_VOCAB_VIEN_ID = "1qlLoYncJEfb8xWM-VBxVLimrB8EfnjcB"
 
 # Đường dẫn lưu trữ
 MODEL_PATH = './models/enVi_transformer.pth'
