@@ -12,8 +12,6 @@ import torch.nn as nn
 from torch.nn import Transformer
 import math
 import warnings
-import os
-import gdown
 warnings.filterwarnings('ignore')
 
 # Load các thành phần cần thiết (tokenizer, vocab, model)
@@ -23,34 +21,12 @@ TGT_LANGUAGE = 'Vietnamese'
 SRC_LANGUAGE_VI_EN = 'Vietnamese'
 TGT_LANGUAGE_VI_EN = 'English'
 
-# Tải model từ Google Drive nếu chưa có
-def download_model_from_drive(file_id, destination):
-    if not os.path.exists(destination):
-        print(f"Đang tải model từ Google Drive tới {destination}...")
-        gdown.download(f'https://drive.google.com/uc?id={file_id}', destination, quiet=False)
-        print("Tải model thành công!")
-    else:
-        print(f"Model {destination} đã tồn tại.")
-
-# File ID trên Google Drive
-EN_VI_MODEL_ID = "1-4WnCCAHOLqZa2ROBUUNpZFUaooSHtjQ"  # Thay thế bằng ID của model enVi_transformer.pth
-VI_EN_MODEL_ID = "1-AU1pgS40Tjar9o3BrW0vjvvdqLVsje7B"  # Thay thế bằng ID của model viEn_transformer.pth
-TOKEN_VOCAB_ENVI_ID = "17yHIZP32t4-nS1tPIYPHj3wnzRqSmLKU"
-TOKEN_VOCAB_VIEN_ID = "1qlLoYncJEfb8xWM-VBxVLimrB8EfnjcB"
-
-# Đường dẫn lưu trữ
-MODEL_PATH = './models/enVi_transformer.pth'
-MODEL_PATH_VI_EN = './models/viEn_transformer.pth'
+# Đường dẫn tới các file
 TOKEN_VOCAB_PATH = './models/token_vocab_enVi_data.pkl'
+MODEL_PATH = './models/enVi_transformer.pth'
+# Đường dẫn tới các file mới
 TOKEN_VOCAB_PATH_VI_EN = './models/token_vocab_viEn_data.pkl'
-
-# Tải model từ Google Drive
-os.makedirs('./models', exist_ok=True)
-download_model_from_drive(EN_VI_MODEL_ID, MODEL_PATH)
-download_model_from_drive(VI_EN_MODEL_ID, MODEL_PATH_VI_EN)
-download_model_from_drive(TOKEN_VOCAB_ENVI_ID, TOKEN_VOCAB_PATH)
-download_model_from_drive(TOKEN_VOCAB_VIEN_ID, TOKEN_VOCAB_PATH_VI_EN)
-
+MODEL_PATH_VI_EN = './models/viEn_transformer.pth'
 
 def vi_tokenizer(sentence):
     tokens = word_tokenize(sentence)
