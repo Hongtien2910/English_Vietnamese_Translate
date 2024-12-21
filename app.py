@@ -261,7 +261,17 @@ def translate_vien(model: torch.nn.Module, src_sentence: str):
     tgt_tokens = greedy_decode(
         model,  src, src_mask, max_len=num_tokens + 5, start_symbol=BOS_IDX).flatten()
     return " ".join(vocab_transform_vi_en[TGT_LANGUAGE_VI_EN].lookup_tokens(list(tgt_tokens.cpu().numpy()))).replace("<bos>", "").replace("<eos>", "")
-                         
+
+def format_sentence(sentence: str) -> str:
+    formatted = (
+        sentence.replace(" ,", ",")
+                .replace(" .", ".")
+                .replace(" ?", "?")
+                .replace(" !", "!")
+                .strip()
+    )
+    return formatted
+
 # Flask server
 app = Flask(__name__)
 
@@ -272,11 +282,13 @@ def translate_api():
         return jsonify({'error': 'Câu đầu vào không hợp lệ!'}), 400
 
     input_sentence = data['sentence']
-    translated_sentence = translate(transformer, input_sentence)  # Truyền model vào đây
+    translated_sentence = translate(transformer, input_sentence) 
+    formatted_translation = format_sentence(translated_sentence) 
     return jsonify({
         'input': input_sentence,
-        'translation': translated_sentence
+        'translation': formatted_translation
     })
+
 @app.route('/translate_vi_en', methods=['POST'])
 def translate_vi_en_api():
     data = request.get_json()
@@ -284,10 +296,11 @@ def translate_vi_en_api():
         return jsonify({'error': 'Câu đầu vào không hợp lệ!'}), 400
 
     input_sentence = data['sentence']
-    english_sentence = translate_vien(transformer_vi_en, input_sentence)  # Truyền mô hình dịch tiếng Việt sang tiếng Anh vào đây
+    english_sentence = translate_vien(transformer_vi_en, input_sentence) 
+    formatted_translation = format_sentence(english_sentence) 
     return jsonify({
         'input': input_sentence,
-        'translation': english_sentence
+        'translation': formatted_translation
     })
 
 if __name__ == '__main__':
